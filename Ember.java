@@ -10,7 +10,9 @@ import java.util.List;
 
 public class Ember {
 
+    private static final Interpreter interpreter = new Interpreter();
     static boolean hadError = false; // boolean variable to indicate whether an error has been hit in the program execution
+    static boolean hadRuntimeError = false; // boolean variable to indicate whether a runtime error has been raised
 
     /* Function: main() - Entrypoint to Ember Interpreter main()
      * 
@@ -43,6 +45,7 @@ public class Ember {
 
         // Indicate an error in the exit code
         if (hadError) System.exit(65);
+        if (hadRuntimeError) System.exit(70);
     }
 
     /* Function: runPrompt() - Interactive session of the Ember Interpreter
@@ -73,9 +76,13 @@ public class Ember {
     private static void run(String source) {
         Scanner scanner = new Scanner(source);
         List<Token> tokens = scanner.scanTokens();
-        for (Token token : tokens){
-            System.out.println(token);
-        }
+        Parser parser = new Parser(tokens);
+        Expr expression = parser.parse();
+
+        // stop if there was a syntax error.
+        if (hadError) return;
+
+        interpreter.interpret(expression);
     }
 
     static void error(int line, String message) {
@@ -85,5 +92,18 @@ public class Ember {
     private static void report(int line, String where, String message){
         System.err.println("[line]" + line + "] Error"+ where + ": " + message);
         hadError = true;
+    }
+
+    static void error(Token token, String message) {
+        if (token.type == TokenType.EOF) {
+            report(token.line, " at end", message);
+        } else {
+            report(token.line, " at '" + token.lexeme + "'", message);
+        }
+    }
+
+    static void runtimeError(RuntimeError error) {
+        System.err.println(error.getMessage() + "\n[line " + error.token.line + "]");
+        hadRuntimeError = true;
     }
 }
