@@ -99,6 +99,7 @@ class Scanner {
 
     private void identifier() {
         while (isAlphaNumeric(peek())) advance();
+        String text = source.substring(start, current);
         TokenType type = keywords.get(text);
         if (type == null) type = TokenType.IDENTIFIER;
         addToken(type);
@@ -150,6 +151,11 @@ class Scanner {
     private char peek() {
         if (isAtEnd()) return '\0';
         return source.charAt(current);
+    }
+
+    private char peekNext() {
+        if (current + 1 >= source.length()) return '\0';
+        return source.charAt(current + 1);
     }
 
     private boolean match(char expected){
